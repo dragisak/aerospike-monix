@@ -23,10 +23,14 @@ stages:
 jobs:
   include:
   - stage: test
-    script: sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport
+    name: "Tests"
+    script: sbt scalafmtCheck scalafmtSbtCheck
+    script: sbt ++$TRAVIS_SCALA_VERSION coverage test coverageReport
   - stage: codecov
+    name: "Publishing test coverage to Codecov"
     script: bash <(curl -s https://codecov.io/bash)
   - stage: release
+    name: "Publishing to Sonatype"
     script: sbt clean ci-release
 
 cache:
