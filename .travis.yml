@@ -11,10 +11,23 @@ sudo: required
 services:
 - docker
 
-script: sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport
+before_install:
+- git fetch --tags
 
-after_success:
-- bash <(curl -s https://codecov.io/bash)
+stages:
+- name: test
+- name: codecov
+- name: release
+  if: (branch = master AND type = push) OR (tag IS present)
+
+jobs:
+  include:
+  - stage: test
+    script: sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport
+  - stage: codecov
+    scribpt: bash <(curl -s https://codecov.io/bash)
+  - stage: release
+    script: sbt clean ci-release
 
 cache:
   directories:
