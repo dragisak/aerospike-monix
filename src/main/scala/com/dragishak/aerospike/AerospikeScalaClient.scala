@@ -12,42 +12,35 @@ class AerospikeScalaClient(client: AerospikeClient, eventLoops: EventLoops) {
   import com.aerospike.client.Bin
   import com.aerospike.client.listener.WriteListener
 
-  def put(key: Task[Key], bin: Task[Bin], writePolicy: Option[WritePolicy] = None): Task[Unit] =
-    for {
-      k <- key
-      b <- bin
-      t <- Task.create[Unit] { (_, callback) =>
-        val listener = new WriteListener {
-          override def onSuccess(key: Key): Unit = callback.onSuccess(Unit)
-          override def onFailure(exception: AerospikeException): Unit = callback.onError(exception)
-        }
-        val loop = eventLoops.next()
-        try {
-          client.put(loop, listener, writePolicy.orNull, k, b)
-        } catch {
-          case ex: AerospikeException => callback.onError(ex)
-        }
-        Cancelable.empty
+  def put(key: Key, bin: Bin, writePolicy: Option[WritePolicy] = None): Task[Unit] =
+    Task.create[Unit] { (_, callback) =>
+      val listener = new WriteListener {
+        override def onSuccess(key: Key): Unit = callback.onSuccess(Unit)
+        override def onFailure(exception: AerospikeException): Unit = callback.onError(exception)
       }
-    } yield t
+      val loop = eventLoops.next()
+      try {
+        client.put(loop, listener, writePolicy.orNull, key, bin)
+      } catch {
+        case ex: AerospikeException => callback.onError(ex)
+      }
+      Cancelable.empty
+    }
 
-  def get(key: Task[Key], policy: Option[Policy] = None): Task[Record] =
-    for {
-      k <- key
-      t <- Task.create[Record] { (_, callback) =>
-        val handler = new RecordListener {
-          override def onSuccess(key: Key, record: Record): Unit = callback.onSuccess(record)
-          override def onFailure(exception: AerospikeException): Unit = callback.onError(exception)
-        }
-        val loop = eventLoops.next()
-        try {
-          client.get(loop, handler, policy.orNull, k)
-        } catch {
-          case ex: AerospikeException => callback.onError(ex)
-        }
-        Cancelable.empty
+  def get(key: Key, policy: Option[Policy] = None): Task[Record] =
+    Task.create[Record] { (_, callback) =>
+      val handler = new RecordListener {
+        override def onSuccess(key: Key, record: Record): Unit = callback.onSuccess(record)
+        override def onFailure(exception: AerospikeException): Unit = callback.onError(exception)
       }
-    } yield t
+      val loop = eventLoops.next()
+      try {
+        client.get(loop, handler, policy.orNull, key)
+      } catch {
+        case ex: AerospikeException => callback.onError(ex)
+      }
+      Cancelable.empty
+    }
 }
 
 object AerospikeScalaClient {
