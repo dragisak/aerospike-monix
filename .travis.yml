@@ -12,19 +12,16 @@ before_install:
 
 stages:
 - name: test
-- name: codecov
 - name: release
   if: (branch = master AND type = push) OR (tag IS present)
 
 jobs:
   include:
   - stage: test
-    name: "Tests"
+    name: "Check formatting"
     script: sbt scalafmtCheck scalafmtSbtCheck
-  - script: sbt coverage +test coverageReport
-  - stage: codecov
-    name: "Publishing test coverage to Codecov"
-    script: bash <(curl -s https://codecov.io/bash)
+  - name: "Test"
+  - script: sbt clean coverage +test coverageReport && bash <(curl -s https://codecov.io/bash)
   - stage: release
     name: "Publishing to Sonatype"
     script: sbt clean ci-release
