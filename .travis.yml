@@ -1,9 +1,5 @@
 language: scala
 
-scala:
-- 2.11.12
-- 2.12.6
-
 jdk: oraclejdk8
 
 sudo: required
@@ -25,7 +21,7 @@ jobs:
   - stage: test
     name: "Tests"
     script: sbt scalafmtCheck scalafmtSbtCheck
-    script: sbt ++$TRAVIS_SCALA_VERSION coverage test coverageReport
+    script: sbt coverage +test coverageReport
   - stage: codecov
     name: "Publishing test coverage to Codecov"
     script: bash <(curl -s https://codecov.io/bash)
