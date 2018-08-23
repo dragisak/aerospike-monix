@@ -22,8 +22,11 @@ class AerospikeScalaClient(client: AerospikeClient, eventLoops: EventLoops) {
           override def onFailure(exception: AerospikeException): Unit = callback.onError(exception)
         }
         val loop = eventLoops.next()
-
-        client.put(loop, listener, writePolicy.orNull, k, b)
+        try {
+          client.put(loop, listener, writePolicy.orNull, k, b)
+        } catch {
+          case ex: AerospikeException => callback.onError(ex)
+        }
         Cancelable.empty
       }
     } yield t
@@ -37,7 +40,11 @@ class AerospikeScalaClient(client: AerospikeClient, eventLoops: EventLoops) {
           override def onFailure(exception: AerospikeException): Unit = callback.onError(exception)
         }
         val loop = eventLoops.next()
-        client.get(loop, handler, policy.orNull, k)
+        try {
+          client.get(loop, handler, policy.orNull, k)
+        } catch {
+          case ex: AerospikeException => callback.onError(ex)
+        }
         Cancelable.empty
       }
     } yield t
