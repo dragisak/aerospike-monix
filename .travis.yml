@@ -25,7 +25,7 @@ jobs:
   - stage: test
     script: sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport
   - stage: codecov
-    scribpt: bash <(curl -s https://codecov.io/bash)
+    script: bash <(curl -s https://codecov.io/bash)
   - stage: release
     script: sbt clean ci-release
 
