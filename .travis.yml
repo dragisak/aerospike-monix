@@ -18,9 +18,7 @@ stages:
 jobs:
   include:
   - stage: test
-    name: "Check formatting"
     script: sbt scalafmtCheck scalafmtSbtCheck
-  - name: "Test"
   - script: sbt clean coverage +test coverageReport && scripts/codecov
   - stage: release
     name: "Publishing to Sonatype"
