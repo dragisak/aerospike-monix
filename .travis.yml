@@ -21,7 +21,7 @@ jobs:
     name: "Check formatting"
     script: sbt scalafmtCheck scalafmtSbtCheck
   - name: "Test"
-  - script: sbt clean coverage +test coverageReport && bash <(curl -s https://codecov.io/bash)
+  - script: sbt clean coverage +test coverageReport && scripts/codecov
   - stage: release
     name: "Publishing to Sonatype"
     script: sbt clean ci-release
