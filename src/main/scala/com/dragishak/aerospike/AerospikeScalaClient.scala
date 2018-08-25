@@ -12,7 +12,7 @@ class AerospikeScalaClient(client: AerospikeClient, eventLoops: EventLoops) {
   import com.aerospike.client.Bin
   import com.aerospike.client.listener.WriteListener
 
-  def put(key: Key, bin: Bin, writePolicy: Option[WritePolicy] = None): Task[Unit] =
+  def put(key: Key, writePolicy: Option[WritePolicy], bins: Bin*): Task[Unit] =
     Task.create[Unit] { (_, callback) =>
       val listener = new WriteListener {
         override def onSuccess(key: Key): Unit = callback.onSuccess(Unit)
@@ -20,12 +20,16 @@ class AerospikeScalaClient(client: AerospikeClient, eventLoops: EventLoops) {
       }
       val loop = eventLoops.next()
       try {
-        client.put(loop, listener, writePolicy.orNull, key, bin)
+        client.put(loop, listener, writePolicy.orNull, key, bins: _*)
       } catch {
         case ex: AerospikeException => callback.onError(ex)
       }
       Cancelable.empty
     }
+
+  def put(key: Key, bins: Bin*): Task[Unit] = put(key, None, bins: _*)
+
+  def put(key: Key, writePolicy: WritePolicy, bins: Bin*): Task[Unit] = put(key, Some(writePolicy), bins: _*)
 
   def get(key: Key, policy: Option[Policy]): Task[Record] =
     Task.create[Record] { (_, callback) =>
