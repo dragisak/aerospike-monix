@@ -29,6 +29,7 @@ libraryDependencies ++= List(
   "com.aerospike" % "aerospike-client" % aerospikeVersion,
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
   "com.dimafeng" %% "testcontainers-scala" % "0.20.0" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.13.4" % Test,
   "org.slf4j" % "slf4j-simple" % "1.7.25" % Test
 )
 

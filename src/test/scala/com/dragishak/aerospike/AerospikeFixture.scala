@@ -1,8 +1,10 @@
 package com.dragishak.aerospike
-import com.aerospike.client.AerospikeClient
+import com.aerospike.client.{AerospikeClient, Bin, Key}
 import com.aerospike.client.async.{EventPolicy, NioEventLoops}
 import com.aerospike.client.policy.ClientPolicy
 import com.dimafeng.testcontainers.{ForAllTestContainer, GenericContainer}
+import org.scalacheck._
+import Arbitrary.arbitrary
 import org.scalatest.Suite
 import org.testcontainers.containers.wait.strategy.Wait
 
@@ -35,5 +37,15 @@ trait AerospikeFixture extends ForAllTestContainer {
 
     f(client)
   }
+
+  implicit val genKey: Gen[Key] = arbitrary[String].map(s => new Key(aerospikeNamespace, null, s))
+  implicit val genBin: Gen[Bin] = for {
+    size <- Gen.choose(1, 14) // Max bin length is 14 in Aerospike
+    bin <- Gen.listOfN(size, Gen.alphaChar).map(_.mkString)
+    value <- arbitrary[String]
+  } yield new Bin(bin, value)
+
+  implicit val arbKey: Arbitrary[Key] = Arbitrary(genKey)
+  implicit val arbBin: Arbitrary[Bin] = Arbitrary(genBin)
 
 }
