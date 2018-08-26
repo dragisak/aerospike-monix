@@ -7,16 +7,18 @@
 ### Installation
 
 ```sbtshell
-libraryDependencies += "com.dragishak" %% "aerospike-monix" % "0.0.3"
+libraryDependencies += "com.dragishak" %% "aerospike-monix" % "0.0.4"
 ```
 
 ### Code examples
 
 ```scala
 import com.dragishak.aerospike._
-import com.aerospike.client.{AerospikeClient, Bin, Key}
+import com.aerospike.client.{AerospikeClient, Bin, Key, Record}
 import com.aerospike.client.async.{EventPolicy, NioEventLoops}
 import com.aerospike.client.policy.ClientPolicy
+import monix.eval.Task
+import monix.execution.Scheduler.Implicits.global
 
 
 val eventPolicy = new EventPolicy()
@@ -30,10 +32,10 @@ val client = AerospikeMonixClient(aerospikeClient, eventLoops)
 val key = new Key("test", null, "key1")
 val bin = new Bin("bin1", "value2")
 
-val task = for {
+val task: Task[(Record, Boolean)] = for {
   _        <- client.put(key, bin)
   res      <- client.get(key)
-  existsed <- client.delete(key)
+  existed <- client.delete(key)
 } yield (res, existed)
 
 ```
