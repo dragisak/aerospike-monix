@@ -19,9 +19,9 @@ import com.aerospike.client.async.{EventPolicy, NioEventLoops}
 import com.aerospike.client.policy.ClientPolicy
 
 
-private val eventPolicy = new EventPolicy()
-private val eventLoops = new NioEventLoops(eventPolicy, 0)
-private val clientPolicy = new ClientPolicy()
+val eventPolicy = new EventPolicy()
+val eventLoops = new NioEventLoops(eventPolicy, 0)
+val clientPolicy = new ClientPolicy()
 clientPolicy.eventLoops = eventLoops
 
 val aerospikeClient = new AerospikeClient(clientPolicy, "localhost", 3000)
