@@ -21,12 +21,15 @@ class AerospikeScalaClientTest
         val task = for {
           _ <- client.put(key, bins: _*)
           r <- client.get(key)
-        } yield r
+          b <- client.delete(key)
+        } yield (r, b)
 
         val expected = bins.map(b => b.name -> b.value.getObject).toMap
 
-        whenReady(task.runAsync) { res =>
-          res.bins.asScala.toList should contain theSameElementsAs expected
+        whenReady(task.runAsync) {
+          case (res, existed) =>
+            res.bins.asScala.toList should contain theSameElementsAs expected
+            existed should be(true)
         }
 
       }

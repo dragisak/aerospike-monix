@@ -2,7 +2,7 @@ package com.dragishak.aerospike
 
 import com.aerospike.client.{AerospikeClient, AerospikeException, Key, Record}
 import com.aerospike.client.async.EventLoops
-import com.aerospike.client.listener.RecordListener
+import com.aerospike.client.listener.{DeleteListener, RecordListener}
 import com.aerospike.client.policy.{Policy, WritePolicy}
 import monix.eval.Task
 import monix.execution.Cancelable
@@ -70,6 +70,24 @@ class AerospikeScalaClient(client: AerospikeClient, eventLoops: EventLoops) {
 
   def get(key: Key, policy: Policy, bins: String*): Task[Record] = get(key, Some(policy), bins: _*)
 
+  def delete(key: Key, writePolicy: Option[WritePolicy]): Task[Boolean] =
+    Task.create[Boolean] { (_, callback) =>
+      val listener = new DeleteListener {
+        override def onSuccess(key: Key, existed: Boolean): Unit = callback.onSuccess(existed)
+
+        override def onFailure(exception: AerospikeException): Unit = callback.onError(exception)
+      }
+      val loop = eventLoops.next()
+      try {
+        client.delete(loop, listener, writePolicy.orNull, key)
+      } catch {
+        case ex: AerospikeException => callback.onError(ex)
+      }
+      Cancelable.empty
+    }
+
+  def delete(key: Key): Task[Boolean] = delete(key, None)
+  def delete(key: Key, writePolicy: WritePolicy): Task[Boolean] = delete(key, Some(writePolicy))
 }
 
 object AerospikeScalaClient {
