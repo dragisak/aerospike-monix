@@ -4,3 +4,36 @@
 
 ## Aerospike Monix Client
 
+### Installation
+
+```sbtshell
+libraryDependencies += "com.dragishak" %% "aerospike-monix" % "0.0.3"
+```
+
+### Code examples
+
+```scala
+import com.dragishak.aerospike._
+import com.aerospike.client.{AerospikeClient, Bin, Key}
+import com.aerospike.client.async.{EventPolicy, NioEventLoops}
+import com.aerospike.client.policy.ClientPolicy
+
+
+private val eventPolicy = new EventPolicy()
+private val eventLoops = new NioEventLoops(eventPolicy, 0)
+private val clientPolicy = new ClientPolicy()
+clientPolicy.eventLoops = eventLoops
+
+val aerospikeClient = new AerospikeClient(clientPolicy, "localhost", 3000)
+val client = AerospikeMonixClient(aerospikeClient, eventLoops)
+
+val key = new Key("test", null, "key1")
+val bin = new Bin("bin1", "value2")
+
+val task = for {
+  _        <- client.put(key, bin)
+  res      <- client.get(key)
+  existsed <- client.delete(key)
+} yield (res, existed)
+
+```

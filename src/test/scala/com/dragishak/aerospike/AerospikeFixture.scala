@@ -30,10 +30,10 @@ trait AerospikeFixture extends ForAllTestContainer {
   clientPolicy.failIfNotConnected = false
   clientPolicy.writePolicyDefault.setTimeout(aerospikeTimeout.toMillis.toInt)
 
-  def withAerospikeScalaClient[T](f: AerospikeScalaClient => T): Unit = {
+  def withAerospikeScalaClient[T](f: AerospikeMonixClient => T): Unit = {
     val aerospikeClient = new AerospikeClient(clientPolicy, container.containerIpAddress, container.mappedPort(3000))
 
-    val client = AerospikeScalaClient(aerospikeClient, eventLoops)
+    val client = AerospikeMonixClient(aerospikeClient, eventLoops)
 
     f(client)
   }

@@ -8,7 +8,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import scala.collection.JavaConverters._
 
-class AerospikeScalaClientTest
+class AerospikeMonixClientTest
     extends WordSpec
     with AerospikeFixture
     with ScalaFutures

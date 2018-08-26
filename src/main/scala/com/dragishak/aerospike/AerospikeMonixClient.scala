@@ -6,11 +6,10 @@ import com.aerospike.client.listener.{DeleteListener, RecordListener}
 import com.aerospike.client.policy.{Policy, WritePolicy}
 import monix.eval.Task
 import monix.execution.Cancelable
+import com.aerospike.client.Bin
+import com.aerospike.client.listener.WriteListener
 
-class AerospikeScalaClient(client: AerospikeClient, eventLoops: EventLoops) {
-
-  import com.aerospike.client.Bin
-  import com.aerospike.client.listener.WriteListener
+class AerospikeMonixClient(client: AerospikeClient, eventLoops: EventLoops) {
 
   def put(key: Key, writePolicy: Option[WritePolicy], bins: Bin*): Task[Unit] =
     Task.create[Unit] { (_, callback) =>
@@ -90,9 +89,9 @@ class AerospikeScalaClient(client: AerospikeClient, eventLoops: EventLoops) {
   def delete(key: Key, writePolicy: WritePolicy): Task[Boolean] = delete(key, Some(writePolicy))
 }
 
-object AerospikeScalaClient {
+object AerospikeMonixClient {
 
-  def apply(client: AerospikeClient, eventLoops: EventLoops): AerospikeScalaClient =
-    new AerospikeScalaClient(client, eventLoops)
+  def apply(client: AerospikeClient, eventLoops: EventLoops): AerospikeMonixClient =
+    new AerospikeMonixClient(client, eventLoops)
 
 }
