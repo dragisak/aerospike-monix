@@ -4,6 +4,9 @@
 
 ## Aerospike Monix Client
 
+
+[Aerospike](https://www.aerospike.com/) + [Monix](https://monix.io/) = **aerospike-monix**
+
 ### Installation
 
 ```sbtshell
