@@ -20,16 +20,20 @@ class AerospikeMonixClientTest
       forAll(genKey, Gen.nonEmptyListOf(genBin)) { (key, bins) =>
         val task = for {
           _ <- client.put(key, bins: _*)
-          r <- client.get(key)
-          b <- client.delete(key)
-        } yield (r, b)
+          exists <- client.exists(key)
+          record <- client.get(key)
+          deleted <- client.delete(key)
+          notExists <- client.exists(key)
+        } yield (exists, record, deleted, notExists)
 
         val expected = bins.map(b => b.name -> b.value.getObject).toMap
 
         whenReady(task.runAsync) {
-          case (res, existed) =>
-            res.bins.asScala.toList should contain theSameElementsAs expected
-            existed should be(true)
+          case (exists, record, deleted, notExists) =>
+            exists should be(true)
+            record.bins.asScala.toList should contain theSameElementsAs expected
+            deleted should be(true)
+            notExists should be(false)
         }
 
       }

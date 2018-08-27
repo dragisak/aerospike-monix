@@ -35,10 +35,11 @@ val client = AerospikeMonixClient(aerospikeClient, eventLoops)
 val key = new Key("test", null, "key1")
 val bin = new Bin("bin1", "value2")
 
-val task: Task[(Record, Boolean)] = for {
-  _        <- client.put(key, bin)
-  res      <- client.get(key)
+val task: Task[(Boolean, Record, Boolean)] = for {
+  _       <- client.put(key, bin)
+  exists  <- client.exists(key)
+  res     <- client.get(key)
   existed <- client.delete(key)
-} yield (res, existed)
+} yield (exists, res, existed)
 
 ```
