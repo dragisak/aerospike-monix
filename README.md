@@ -10,7 +10,7 @@
 ### Installation
 
 ```sbtshell
-libraryDependencies += "com.dragishak" %% "aerospike-monix" % "0.0.4"
+libraryDependencies += "com.dragishak" %% "aerospike-monix" % "0.0.5"
 ```
 
 ### Code examples
