@@ -10,7 +10,7 @@
 ### Installation
 
 ```sbtshell
-libraryDependencies += "com.dragishak" %% "aerospike-monix" % "0.0.5"
+libraryDependencies += "com.dragishak" %% "aerospike-monix" % "0.0.6"
 ```
 
 ### Code examples
@@ -43,3 +43,11 @@ val task: Task[(Boolean, Record, Boolean)] = for {
 } yield (exists, res, existed)
 
 ```
+
+### Currently Supported Operations
+
+* put
+* get
+* delete
+* exists
+* operate
