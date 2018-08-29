@@ -1,6 +1,6 @@
 package com.dragishak.aerospike
 
-import com.aerospike.client.Operation
+import com.aerospike.client.{BatchRead, Operation}
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen
 import org.scalatest.WordSpec
@@ -57,6 +57,25 @@ class AerospikeMonixClientTest
           case (record, exists) =>
             record.bins.asScala.toList should contain theSameElementsAs expected
             exists should be(true)
+        }
+
+      }
+
+    }
+
+    "batch get" in withAerospikeScalaClient { client =>
+      forAll(genKey, Gen.nonEmptyListOf(genBin)) { (key, bins) =>
+        val ops = bins.map(Operation.put)
+        val task = for {
+          _ <- client.operate(key, ops: _*)
+          reads <- client.get(List(new BatchRead(key, true)))
+          _ <- client.delete(key)
+        } yield reads
+
+        val expected = bins.map(b => b.name -> b.value.getObject).toMap
+
+        whenReady(task.runAsync) { reads =>
+          reads.flatMap(_.record.bins.asScala.toList) should contain theSameElementsAs expected
         }
 
       }

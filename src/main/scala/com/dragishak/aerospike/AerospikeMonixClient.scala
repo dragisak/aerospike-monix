@@ -1,11 +1,15 @@
 package com.dragishak.aerospike
 
-import com.aerospike.client.{AerospikeClient, AerospikeException, Bin, Key, Operation, Record}
+import java.util
+
+import com.aerospike.client.{AerospikeClient, AerospikeException, BatchRead, Bin, Key, Operation, Record}
 import com.aerospike.client.async.EventLoops
-import com.aerospike.client.listener.{DeleteListener, ExistsListener, RecordListener, WriteListener}
-import com.aerospike.client.policy.{Policy, WritePolicy}
+import com.aerospike.client.listener.{BatchListListener, DeleteListener, ExistsListener, RecordListener, WriteListener}
+import com.aerospike.client.policy.{BatchPolicy, Policy, WritePolicy}
 import monix.eval.Task
 import monix.execution.Cancelable
+import scala.collection.JavaConverters._
+import scala.collection.Seq
 
 class AerospikeMonixClient(client: AerospikeClient, eventLoops: EventLoops) {
 
@@ -66,6 +70,25 @@ class AerospikeMonixClient(client: AerospikeClient, eventLoops: EventLoops) {
   def get(key: Key, bins: String*): Task[Record] = get(key, None, bins: _*)
 
   def get(key: Key, policy: Policy, bins: String*): Task[Record] = get(key, Some(policy), bins: _*)
+
+  def get(policy: Option[BatchPolicy], reads: Seq[BatchRead]): Task[List[BatchRead]] =
+    Task.create[List[BatchRead]] { (_, callback) =>
+      val handler = new BatchListListener {
+        override def onSuccess(records: util.List[BatchRead]): Unit = callback.onSuccess(records.asScala.toList)
+        override def onFailure(exception: AerospikeException): Unit = callback.onError(exception)
+      }
+
+      val loop = eventLoops.next()
+      try {
+        client.get(loop, handler, policy.orNull, reads.asJava)
+      } catch {
+        case ex: AerospikeException => callback.onError(ex)
+      }
+      Cancelable.empty
+    }
+
+  def get(reads: Seq[BatchRead]): Task[List[BatchRead]] = get(None, reads)
+  def get(policy: BatchPolicy, reads: Seq[BatchRead]): Task[List[BatchRead]] = get(Some(policy), reads)
 
   def delete(key: Key, writePolicy: Option[WritePolicy]): Task[Boolean] =
     Task.create[Boolean] { (_, callback) =>
