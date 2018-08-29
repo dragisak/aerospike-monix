@@ -13,7 +13,7 @@ class AerospikeMonixClient(client: AerospikeClient, eventLoops: EventLoops) {
   def put(key: Key, writePolicy: Option[WritePolicy], bins: Bin*): Task[Unit] =
     Task.create[Unit] { (_, callback) =>
       val listener = new WriteListener {
-        override def onSuccess(key: Key): Unit = callback.onSuccess(Unit)
+        override def onSuccess(key: Key): Unit = callback.onSuccess(())
         override def onFailure(exception: AerospikeException): Unit = callback.onError(exception)
       }
       val loop = eventLoops.next()
