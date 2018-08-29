@@ -1,12 +1,11 @@
 package com.dragishak.aerospike
 
-import com.aerospike.client.{AerospikeClient, AerospikeException, Key, Record}
+import com.aerospike.client.{AerospikeClient, AerospikeException, Bin, Key, Operation, Record}
 import com.aerospike.client.async.EventLoops
 import com.aerospike.client.listener.{DeleteListener, ExistsListener, RecordListener, WriteListener}
 import com.aerospike.client.policy.{Policy, WritePolicy}
 import monix.eval.Task
 import monix.execution.Cancelable
-import com.aerospike.client.Bin
 
 class AerospikeMonixClient(client: AerospikeClient, eventLoops: EventLoops) {
 
@@ -104,6 +103,26 @@ class AerospikeMonixClient(client: AerospikeClient, eventLoops: EventLoops) {
 
   def exists(key: Key): Task[Boolean] = exists(key, None)
   def exists(key: Key, policy: Policy): Task[Boolean] = exists(key, Some(policy))
+
+  def operate(key: Key, writePolicy: Option[WritePolicy], operations: Operation*): Task[Record] =
+    Task.create[Record] { (_, callback) =>
+      val listener = new RecordListener {
+        override def onSuccess(key: Key, record: Record): Unit = callback.onSuccess(record)
+        override def onFailure(exception: AerospikeException): Unit = callback.onError(exception)
+      }
+      val loop = eventLoops.next()
+      try {
+        client.operate(loop, listener, writePolicy.orNull, key, operations: _*)
+      } catch {
+        case ex: AerospikeException => callback.onError(ex)
+      }
+      Cancelable.empty
+    }
+
+  def operate(key: Key, operations: Operation*): Task[Record] = operate(key, None, operations: _*)
+  def operate(key: Key, writePolicy: WritePolicy, operations: Operation*): Task[Record] =
+    operate(key, Some(writePolicy), operations: _*)
+
 }
 
 object AerospikeMonixClient {
