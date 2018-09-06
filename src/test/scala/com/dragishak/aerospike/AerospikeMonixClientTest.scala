@@ -24,16 +24,18 @@ class AerospikeMonixClientTest
           _ <- client.put(key, bins: _*)
           exists <- client.exists(key)
           record <- client.get(key)
+          header <- client.getHeader(key)
           deleted <- client.delete(key)
           notExists <- client.exists(key)
-        } yield (exists, record, deleted, notExists)
+        } yield (exists, record, header, deleted, notExists)
 
         val expected = bins.map(b => b.name -> b.value.getObject).toMap
 
         whenReady(task.runAsync) {
-          case (exists, record, deleted, notExists) =>
+          case (exists, record, header, deleted, notExists) =>
             exists should be(true)
             record.bins.asScala.toList should contain theSameElementsAs expected
+            header.generation should be(1)
             deleted should be(true)
             notExists should be(false)
         }
