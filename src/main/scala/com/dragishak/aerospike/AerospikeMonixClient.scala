@@ -4,10 +4,12 @@ import java.util
 
 import com.aerospike.client.{AerospikeClient, AerospikeException, BatchRead, Bin, Key, Operation, Record}
 import com.aerospike.client.async.EventLoops
-import com.aerospike.client.listener.{BatchListListener, DeleteListener, ExistsListener, RecordListener, WriteListener}
-import com.aerospike.client.policy.{BatchPolicy, Policy, WritePolicy}
+import com.aerospike.client.listener._
+import com.aerospike.client.policy.{BatchPolicy, Policy, QueryPolicy, WritePolicy}
+import com.aerospike.client.query.Statement
 import monix.eval.Task
 import monix.execution.Cancelable
+
 import scala.collection.JavaConverters._
 import scala.collection.Seq
 
@@ -164,6 +166,29 @@ class AerospikeMonixClient(client: AerospikeClient, eventLoops: EventLoops) {
   def operate(key: Key, operations: Operation*): Task[Record] = operate(key, None, operations: _*)
   def operate(key: Key, writePolicy: WritePolicy, operations: Operation*): Task[Record] =
     operate(key, Some(writePolicy), operations: _*)
+
+  def query(statement: Statement, policy: Option[QueryPolicy]): Task[List[Record]] =
+    Task.create[List[Record]] { (_, callback) =>
+      var records: List[Record] = Nil
+
+      val handler = new RecordSequenceListener {
+        override def onRecord(key: Key, record: Record): Unit = records = record :: records
+
+        override def onSuccess(): Unit = callback.onSuccess(records)
+
+        override def onFailure(exception: AerospikeException): Unit = callback.onError(exception)
+      }
+      val loop = eventLoops.next()
+      try {
+        client.query(loop, handler, policy.orNull, statement)
+      } catch {
+        case ex: AerospikeException => callback.onError(ex)
+      }
+      Cancelable.empty
+    }
+
+  def query(statement: Statement): Task[List[Record]] = query(statement, None)
+  def query(statement: Statement, policy: QueryPolicy): Task[List[Record]] = query(statement, Some(policy))
 
 }
 
