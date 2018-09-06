@@ -90,6 +90,25 @@ class AerospikeMonixClient(client: AerospikeClient, eventLoops: EventLoops) {
   def get(reads: Seq[BatchRead]): Task[List[BatchRead]] = get(None, reads)
   def get(policy: BatchPolicy, reads: Seq[BatchRead]): Task[List[BatchRead]] = get(Some(policy), reads)
 
+  def getHeader(key: Key, policy: Option[Policy]): Task[Record] =
+    Task.create[Record] { (_, callback) =>
+      val handler = new RecordListener {
+        override def onSuccess(key: Key, record: Record): Unit = callback.onSuccess(record)
+
+        override def onFailure(exception: AerospikeException): Unit = callback.onError(exception)
+      }
+      val loop = eventLoops.next()
+      try {
+        client.getHeader(loop, handler, policy.orNull, key)
+      } catch {
+        case ex: AerospikeException => callback.onError(ex)
+      }
+      Cancelable.empty
+    }
+
+  def getHeader(key: Key): Task[Record] = getHeader(key, None)
+  def getHeader(key: Key, policy: Policy): Task[Record] = getHeader(key, Some(policy))
+
   def delete(key: Key, writePolicy: Option[WritePolicy]): Task[Boolean] =
     Task.create[Boolean] { (_, callback) =>
       val listener = new DeleteListener {
