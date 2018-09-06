@@ -20,9 +20,9 @@ scalaVersion := "2.12.6"
 
 crossScalaVersions := List("2.12.6", "2.11.12")
 
-val monixVersion = "3.0.0-RC1"
+val monixVersion = "3.0.0-RC2-d0feeba "
 
-val aerospikeVersion = "4.1.9"
+val aerospikeVersion = "4.1.11"
 
 libraryDependencies ++= List(
   "io.monix" %% "monix" % monixVersion,
